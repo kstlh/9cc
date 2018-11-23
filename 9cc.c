@@ -38,6 +38,7 @@ Node *new_node_num(int val);
 Node *expr();
 Node *mul();
 Node *term();
+void gen(Node *node);
 
 
 Node *new_node(int ty, Node *lhs, Node *rhs) {
@@ -97,6 +98,30 @@ Node *term() {
 	tokens[pos].input);
 }
 
+void gen(Node *node) {
+  if (node->ty == ND_NUM) {
+    printf("  push %d\n", node->val);
+    return;
+  }
+
+  gen(node->lhs);
+  gen(node->rhs);
+
+  printf("  pop rdi\n");
+  printf("  pop rax\n");
+
+  switch (node->ty) {
+  case '+':
+    printf("  add rax, rdi\n");
+    break;
+  case '-':
+    printf("  sub rax, rdi\n");
+    break;
+  }
+
+  printf("  push rax\n");
+}
+
 // pが指している文字列をトークンに分割してtokensに保存する
 void tokenize(char *p) {
   int i = 0;
@@ -154,11 +179,9 @@ int main(int argc, char **argv) {
   printf(".global main\n");
   printf("main:\n");
 
-  // 式の最初は数でなければならないので、それをチェックして
-  // 最初のmov命令を出力
-  if (tokens[0].ty != TK_NUM)
-    error(0);
-  printf("  mov rax, %d\n", tokens[0].val);
+  gen(node);
+
+  printf("  pop rax\n");
   printf("  ret\n");
   return 0;
 }
