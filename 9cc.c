@@ -117,6 +117,9 @@ void gen(Node *node) {
   case '-':
     printf("  sub rax, rdi\n");
     break;
+  case '*':
+    printf("  mul rdi\n");
+    break;
   }
 
   printf("  push rax\n");
@@ -132,7 +135,7 @@ void tokenize(char *p) {
       continue;
     }
 
-    if (*p == '+' || *p == '-') {
+    if (*p == '+' || *p == '-'|| *p == '*' ) {
       tokens[i].ty = *p;
       tokens[i].input = p;
       i++;
