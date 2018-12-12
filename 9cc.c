@@ -6,6 +6,7 @@
 // トークンの型を表す値
 enum {
       TK_NUM = 256, // 整数トークン
+      TK_IDENT,     // 識別子
       TK_EOF,       // 入力の終わりを表すトークン
 };
 
@@ -17,7 +18,8 @@ typedef struct {
 } Token;
 
 enum {
-      ND_NUM = 256
+      ND_NUM = 256,
+      ND_IDENT,
 };
 
 typedef struct Node {
@@ -25,7 +27,12 @@ typedef struct Node {
   struct Node *lhs;
   struct Node *rhs;
   int val;
+  char *name;
 } Node;
+
+// パースした式をこの配列に保存する
+Node *code[100];
+int stmt = 0;
 
 // トークナイズした結果のトークン列はこの配列に保存する
 // 100個以上のトークンは来ないものとする
@@ -35,6 +42,9 @@ int pos = 0;
 
 Node *new_node(int ty, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
+Node *new_node_ident(char *input);
+void program();
+Node *assign();
 Node *expr();
 Node *mul();
 Node *term();
@@ -54,6 +64,33 @@ Node *new_node_num(int val) {
   node->ty = ND_NUM;
   node->val = val;
   return node;
+}
+
+Node *new_node_ident(char *input) {
+  Node *node = malloc(sizeof(Node));
+  node->ty = ND_IDENT;
+  node->name = input;
+  return node;
+}
+
+void program() {
+  while(tokens[pos].ty != TK_EOF) {
+    code[stmt++] = assign();
+  }
+}
+
+Node *assign() {
+  Node *lhs = expr();
+  
+  if (tokens[pos].ty == ';') {
+    pos++;
+    return lhs;
+  }
+  if(tokens[pos].ty == '=') {
+    pos++;
+    return new_node('=', lhs, assign());
+  }
+  fprintf(stderr, "セミコロンがありません:%s\n",tokens[pos].input);
 }
 
 Node *expr() {
@@ -85,6 +122,8 @@ Node *mul() {
 Node *term() {
   if (tokens[pos].ty == TK_NUM)
     return new_node_num(tokens[pos++].val);
+  if (tokens[pos].ty == TK_IDENT)
+    return new_node_ident(tokens[pos++].input);
   if (tokens[pos].ty == '(') {
     pos++;
     Node *node = expr();
@@ -95,12 +134,44 @@ Node *term() {
     return node;
   }
   fprintf(stderr,"数値でも開きカッコでもないトークンです: %s" ,
-	tokens[pos].input);
+	  tokens[pos].input);
+  
+}
+
+void gen_lval(Node *node) {
+  if (node->ty == ND_IDENT) {
+    printf("  mov rax, rbp\n");
+    printf("  sub rax, %d\n",
+	   ('z' - *(node->name) + 1) * 8);
+    printf("  push rax\n");
+    return;
+  }
+  fprintf(stderr,"代入の左辺値が変数ではありません: %s",tokens[pos].input);
 }
 
 void gen(Node *node) {
   if (node->ty == ND_NUM) {
     printf("  push %d\n", node->val);
+    return;
+  }
+
+  if (node->ty == ND_IDENT) {
+    gen_lval(node);
+    printf("  pop rax\n");
+    printf("  mov rax, [rax]\n");
+    printf("  push rax\n");
+    return;
+  }
+
+
+  if (node->ty == '=') {
+    gen_lval(node->lhs);
+    gen(node->rhs);
+
+    printf("  pop rdi\n");
+    printf("  pop rax\n");
+    printf("  mov [rax], rdi\n");
+    printf("  push rdi\n");
     return;
   }
 
@@ -138,7 +209,8 @@ void tokenize(char *p) {
       continue;
     }
 
-    if (*p == '+' || *p == '-'|| *p == '*' || *p =='/' || *p == '(' || *p == ')') {
+    if (*p == '+' || *p == '-'|| *p == '*' || *p =='/' ||
+	*p == '(' || *p == ')'|| *p == '=' || *p ==';') {
       tokens[i].ty = *p;
       tokens[i].input = p;
       i++;
@@ -151,6 +223,14 @@ void tokenize(char *p) {
       tokens[i].input = p;
       tokens[i].val = strtol(p, &p, 10);
       i++;
+      continue;
+    }
+
+    if ('a' <= *p && *p <= 'z') {
+      tokens[i].ty = TK_IDENT;
+      tokens[i].input = p;
+      i++;
+      p++;
       continue;
     }
 
@@ -177,17 +257,32 @@ int main(int argc, char **argv) {
 
   // トークナイズする
   tokenize(argv[1]);
-
-  Node *node = expr();
+  program();
 
   // アセンブリの前半部分を出力
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
   printf("main:\n");
 
-  gen(node);
+  // プロローグ
+  // 変数26個分の領域を確保する
+  printf("  push rbp\n");
+  printf("  mov rbp, rsp\n");
+  printf("  sub rsp, 208\n");
+  
+  // 先頭の式から順にコード生成
+  for (int i = 0; i < stmt ; i++) {
+    gen(code[i]);
 
-  printf("  pop rax\n");
+    // 式の評価結果としてスタックに一つの値が残っている
+    // はずなので、スタックが溢れないようにポップしておく
+    printf("  pop rax\n");
+  }
+
+  // エピローグ
+  // 最後の式の結果がRAXに残っているのでそれが返り値になる
+  printf("  mov rsp, rbp\n");
+  printf("  pop rbp\n");
   printf("  ret\n");
   return 0;
 }
