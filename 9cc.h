@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 // トークンの型を表す値
@@ -30,6 +31,17 @@ typedef struct Node {
   char *name;
 } Node;
 
+typedef struct {
+  void **data;
+  int capacity;
+  int len;
+} Vector;
+
+typedef struct {
+  Vector *keys;
+  Vector *vals;
+} Map;
+
 // トークナイズした結果のトークン列はこの配列に保存する
 // 100個以上のトークンは来ないものとする
 extern Token tokens[100];
@@ -49,3 +61,9 @@ Node *expr();
 Node *mul();
 Node *term();
 void gen(Node *node);
+void runtest();
+Vector *new_vector();
+void vec_push(Vector *vec,void *elem);
+Map *new_map();
+void map_put(Map *map, char *key, void *val);
+void *map_get(Map *map, char *key);
