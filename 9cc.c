@@ -6,13 +6,6 @@ int pos = 0;
 Node *code[100];
 int stmt = 0;
 
-// エラーを報告するための関数
-void error(int i) {
-  fprintf(stderr, "予期せぬトークンです: %s\n",
-	  tokens[i].input);
-  exit(1);
-}
-
 int main(int argc, char **argv) {
   if (argc != 2) {
     fprintf(stderr, "引数の個数が正しくありません\n");

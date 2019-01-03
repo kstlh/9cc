@@ -1,8 +1,12 @@
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdnoreturn.h>
 #include <string.h>
+
+noreturn void error(char *fmt, ...);
 
 // トークンの型を表す値
 enum {

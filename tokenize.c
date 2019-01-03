@@ -35,7 +35,7 @@ void tokenize(char *p) {
       continue;
     }
 
-    fprintf(stderr, "トークナイズできません: %s\n", p);
+    error("トークナイズできません: %s\n", p);
     exit(1);
   }
 

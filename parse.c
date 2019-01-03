@@ -39,7 +39,7 @@ Node *assign() {
     pos++;
     return new_node('=', lhs, assign());
   }
-  fprintf(stderr, "セミコロンがありません:%s\n",tokens[pos].input);
+  error("セミコロンがありません:%s\n",tokens[pos].input);
 }
 
 Node *expr() {
@@ -77,12 +77,12 @@ Node *term() {
     pos++;
     Node *node = expr();
     if (tokens[pos].ty != ')') 
-      fprintf(stderr, "開きカッコに対応する閉じカッコがありません: %s",
+      error("開きカッコに対応する閉じカッコがありません: %s",
 	    tokens[pos].input);
     pos++;
     return node;
   }
-  fprintf(stderr,"数値でも開きカッコでもないトークンです: %s" ,
+  error("数値でも開きカッコでもないトークンです: %s" ,
 	  tokens[pos].input);
   
 }
