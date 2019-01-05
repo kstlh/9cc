@@ -1,6 +1,14 @@
 #include "9cc.h"
 
-Node *new_node(int ty, Node *lhs, Node *rhs) {
+static Node *new_node(int ty, Node *lhs, Node *rhs);
+static Node *new_node_num(int val);
+static Node *new_node_ident(char *input);
+static Node *assign();
+static Node *expr();
+static Node *mul();
+static Node *term();
+
+static Node *new_node(int ty, Node *lhs, Node *rhs) {
   Node *node = malloc(sizeof(Node));
   node->ty = ty;
   node->lhs = lhs;
@@ -8,14 +16,14 @@ Node *new_node(int ty, Node *lhs, Node *rhs) {
   return node;
 }
 
-Node *new_node_num(int val) {
+static Node *new_node_num(int val) {
   Node *node = malloc(sizeof(Node));
   node->ty = ND_NUM;
   node->val = val;
   return node;
 }
 
-Node *new_node_ident(char *input) {
+static Node *new_node_ident(char *input) {
   Node *node = malloc(sizeof(Node));
   node->ty = ND_IDENT;
   node->name = input;
@@ -28,7 +36,7 @@ void program() {
   }
 }
 
-Node *assign() {
+static Node *assign() {
   Node *lhs = expr();
   
   if (tokens[pos].ty == ';') {
@@ -42,7 +50,7 @@ Node *assign() {
   error("セミコロンがありません:%s\n",tokens[pos].input);
 }
 
-Node *expr() {
+static Node *expr() {
   Node *lhs = mul();
   if (tokens[pos].ty == '+') {
     pos++;
@@ -55,7 +63,7 @@ Node *expr() {
   return lhs;
 }
 
-Node *mul() {
+static Node *mul() {
   Node *lhs = term();
   if (tokens[pos].ty == '*') {
     pos++;
@@ -68,7 +76,7 @@ Node *mul() {
   return lhs;
 }
 
-Node *term() {
+static Node *term() {
   if (tokens[pos].ty == TK_NUM)
     return new_node_num(tokens[pos++].val);
   if (tokens[pos].ty == TK_IDENT)

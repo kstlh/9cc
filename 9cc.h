@@ -8,12 +8,16 @@
 
 noreturn void error(char *fmt, ...);
 
+// parse.c
+
 // トークンの型を表す値
 enum {
       TK_NUM = 256, // 整数トークン
       TK_IDENT,     // 識別子
       TK_EOF,       // 入力の終わりを表すトークン
 };
+
+void program();
 
 // トークンの型
 typedef struct {
@@ -56,14 +60,6 @@ extern Node *code[100];
 extern int stmt;
 
 void tokenize(char *p);
-Node *new_node(int ty, Node *lhs, Node *rhs);
-Node *new_node_num(int val);
-Node *new_node_ident(char *input);
-void program();
-Node *assign();
-Node *expr();
-Node *mul();
-Node *term();
 void gen(Node *node);
 void runtest();
 Vector *new_vector();
