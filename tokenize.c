@@ -21,8 +21,8 @@ Vector *tokenize(char *p) {
       continue;
     }
 
-    // + or -
-    if (*p == '+' || *p == '-') {
+    // single letter token
+    if (strchr("+-*", *p)) {
       add_token(v, *p, p);
       i++;
       p++;
