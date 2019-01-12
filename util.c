@@ -24,3 +24,22 @@ void vec_push(Vector *vec, void *elem) {
   vec->data[vec->len++] = elem;
 }
 
+Map *new_map(void) {
+  Map *map = malloc(sizeof(Map));
+  map->keys = new_vec();
+  map->vals = new_vec();
+  return map;
+}
+  
+void map_put(Map *map, char *key, void *val) {
+  vec_push(map->keys, key);
+  vec_push(map->vals, val);
+}
+
+void *map_get(Map *map, char *key) {
+  for(int i = map->keys->len - 1 ; i>=0 ; i--)
+    if(!strcmp(map->keys->data[i],key))
+      return map->vals->data[i];
+  return NULL;
+}
+  
