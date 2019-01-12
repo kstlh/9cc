@@ -1,44 +1,46 @@
 #include "9cc.h"
 
-// pが指している文字列をトークンに分割してtokensに保存する
-void tokenize(char *p) {
+// Tokenizer
+static Token *add_token(Vector *v, int ty, char *input) {
+  Token *t = malloc(sizeof(Token));
+  t->ty = ty;
+  t->input = input;
+  vec_push(v, t);
+  return t;
+}
+
+// Tokenized input is stored to this array.
+Vector *tokenize(char *p) {
+  Vector *v = new_vec();
+
   int i = 0;
   while (*p) {
-    // 空白文字をスキップ
+    // Skip whitespace
     if (isspace(*p)) {
       p++;
       continue;
     }
 
-    if (*p == '+' || *p == '-'|| *p == '*' || *p =='/' ||
-	*p == '(' || *p == ')'|| *p == '=' || *p ==';') {
-      tokens[i].ty = *p;
-      tokens[i].input = p;
+    // + or -
+    if (*p == '+' || *p == '-') {
+      add_token(v, *p, p);
       i++;
       p++;
       continue;
     }
 
+    // Number
     if (isdigit(*p)) {
-      tokens[i].ty = TK_NUM;
-      tokens[i].input = p;
-      tokens[i].val = strtol(p, &p, 10);
+      Token *t = add_token(v, TK_NUM, p);
+      t->val = strtol(p, &p, 10);
       i++;
       continue;
     }
 
-    if ('a' <= *p && *p <= 'z') {
-      tokens[i].ty = TK_IDENT;
-      tokens[i].input = p;
-      i++;
-      p++;
-      continue;
-    }
-
-    error("トークナイズできません: %s\n", p);
+    fprintf(stderr, "cannot tokenize: %s", p);
     exit(1);
   }
 
-  tokens[i].ty = TK_EOF;
-  tokens[i].input = p;
+  add_token(v, TK_EOF, p);
+  return v;
 }

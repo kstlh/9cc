@@ -1,62 +1,30 @@
 #include "9cc.h"
 
-void gen_lval(Node *node) {
-  if (node->ty == ND_IDENT) {
-    printf("  mov rax, rbp\n");
-    printf("  sub rax, %d\n",
-	   ('z' - *(node->name) + 1) * 8);
-    printf("  push rax\n");
-    return;
+void gen_x86(Vector *irv) {
+  for (int i = 0; i < irv->len; i++) {
+    IR *ir = irv->data[i];
+
+    switch (ir->op) {
+    case IR_IMM:
+      printf("  mov %s, %d\n", regs[ir->lhs], ir->rhs);
+      break;
+    case IR_MOV:
+      printf("  mov %s, %s\n", regs[ir->lhs], regs[ir->rhs]);
+      break;
+    case IR_RETURN:
+      printf("  mov rax, %s\n", regs[ir->lhs]);
+      printf("  ret\n");
+      break;
+    case '+':
+      printf("  add %s, %s\n", regs[ir->lhs], regs[ir->rhs]);
+      break;
+    case '-':
+      printf("  sub %s, %s\n", regs[ir->lhs], regs[ir->rhs]);
+      break;
+    case IR_NOP:
+      break;
+    default:
+      assert(0 && "unknown operator");
+    }
   }
-  fprintf(stderr,"代入の左辺値が変数ではありません: %s",tokens[pos].input);
-}
-
-void gen(Node *node) {
-  if (node->ty == ND_NUM) {
-    printf("  push %d\n", node->val);
-    return;
-  }
-
-  if (node->ty == ND_IDENT) {
-    gen_lval(node);
-    printf("  pop rax\n");
-    printf("  mov rax, [rax]\n");
-    printf("  push rax\n");
-    return;
-  }
-
-
-  if (node->ty == '=') {
-    gen_lval(node->lhs);
-    gen(node->rhs);
-
-    printf("  pop rdi\n");
-    printf("  pop rax\n");
-    printf("  mov [rax], rdi\n");
-    printf("  push rdi\n");
-    return;
-  }
-
-  gen(node->lhs);
-  gen(node->rhs);
-
-  printf("  pop rdi\n");
-  printf("  pop rax\n");
-
-  switch (node->ty) {
-  case '+':
-    printf("  add rax, rdi\n");
-    break;
-  case '-':
-    printf("  sub rax, rdi\n");
-    break;
-  case '*':
-    printf("  mul rdi\n");
-    break;
-  case '/':
-    printf("  mov rdx, 0\n");
-    printf("  div rdi\n");
-  }
-
-  printf("  push rax\n");
 }

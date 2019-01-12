@@ -8,7 +8,7 @@ noreturn void error(char *fmt, ...) {
   exit(1);
 }
 
-Vector *new_vector() {
+Vector *new_vec() {
   Vector *vec = malloc(sizeof(Vector));
   vec->data = malloc(sizeof(void *) * 16);
   vec->capacity = 16;
@@ -24,21 +24,3 @@ void vec_push(Vector *vec, void *elem) {
   vec->data[vec->len++] = elem;
 }
 
-Map *new_map() {
-  Map *map = malloc(sizeof(Map));
-  map->keys = new_vector();
-  map->vals = new_vector();
-  return map;
-}
-
-void map_put(Map *map, char *key, void *val) {
-  vec_push(map->keys, key);
-  vec_push(map->vals, val);
-}
-
-void *map_get(Map *map, char *key) {
-  for (int i = map->keys->len - 1; i >= 0; i--)
-    if (strcmp(map->keys->data[i], key) == 0)
-      return map->vals->data[i];
-  return NULL;
-}

@@ -1,43 +1,15 @@
+#include <assert.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <stdnoreturn.h>
 #include <string.h>
 
+/// util.c
+
 noreturn void error(char *fmt, ...);
-
-// parse.c
-
-// トークンの型を表す値
-enum {
-      TK_NUM = 256, // 整数トークン
-      TK_IDENT,     // 識別子
-      TK_EOF,       // 入力の終わりを表すトークン
-};
-
-void program();
-
-// トークンの型
-typedef struct {
-  int ty;      // トークンの型
-  int val;     // tyがTK_NUMの場合、その数値
-  char *input; // トークン文字列（エラーメッセージ用）
-} Token;
-
-enum {
-      ND_NUM = 256,
-      ND_IDENT,
-};
-
-typedef struct Node {
-  int ty;
-  struct Node *lhs;
-  struct Node *rhs;
-  int val;
-  char *name;
-} Node;
 
 typedef struct {
   void **data;
@@ -45,25 +17,62 @@ typedef struct {
   int len;
 } Vector;
 
+Vector *new_vec(void);
+void vec_push(Vector *v, void *elem);
+
+/// token.c
+
+enum {
+  TK_NUM = 256, // Number literal
+  TK_EOF,       // End marker
+};
+
+// Token type
 typedef struct {
-  Vector *keys;
-  Vector *vals;
-} Map;
+  int ty;      // Token type
+  int val;     // Number literal
+  char *input; // Token string (for error reporting)
+} Token;
 
-// トークナイズした結果のトークン列はこの配列に保存する
-// 100個以上のトークンは来ないものとする
-extern Token tokens[100];
-extern int pos;
+Vector *tokenize(char *p);
 
-// パースした式をこの配列に保存する
-extern Node *code[100];
-extern int stmt;
+/// parse.c
 
-void tokenize(char *p);
-void gen(Node *node);
-void runtest();
-Vector *new_vector();
-void vec_push(Vector *vec,void *elem);
-Map *new_map();
-void map_put(Map *map, char *key, void *val);
-void *map_get(Map *map, char *key);
+enum {
+  ND_NUM = 256,     // Number literal
+};
+
+typedef struct Node {
+  int ty;           // Node type
+  struct Node *lhs; // left-hand side
+  struct Node *rhs; // right-hand side
+  int val;          // Number literal
+} Node;
+
+Node *parse(Vector *tokens);
+
+/// ir.c
+
+enum {
+  IR_IMM,
+  IR_MOV,
+  IR_RETURN,
+  IR_KILL,
+  IR_NOP,
+};
+
+typedef struct {
+  int op;
+  int lhs;
+  int rhs;
+} IR;
+
+Vector *gen_ir(Node *node);
+
+/// regalloc.c
+
+extern char *regs[];
+void alloc_regs(Vector *irv);
+
+/// codegen.c
+void gen_x86(Vector *irv);
