@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <assert.h>
 #include <ctype.h>
 #include <stdarg.h>
@@ -36,8 +37,9 @@ void util_test();
 /// token.c
 
 enum {
-  TK_NUM = 256, // Number literal
-  TK_EOF,       // End marker
+      TK_NUM = 256, // Number literal
+      TK_RETURN,    // "return"
+      TK_EOF,       // End marker
 };
 
 // Token type
@@ -52,7 +54,10 @@ Vector *tokenize(char *p);
 /// parse.c
 
 enum {
-  ND_NUM = 256,     // Number literal
+      ND_NUM = 256,     // Number literal
+      ND_RETURN,        // Return statement
+      ND_COMP_STMT,     // Compound statement
+      ND_EXPR_STMT,     // Expressions statement
 };
 
 typedef struct Node {
@@ -60,6 +65,8 @@ typedef struct Node {
   struct Node *lhs; // left-hand side
   struct Node *rhs; // right-hand side
   int val;          // Number literal
+  struct Node *expr;// "return" or expression stmt
+  Vector *stmts;
 } Node;
 
 Node *parse(Vector *tokens);
