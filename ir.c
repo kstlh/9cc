@@ -9,6 +9,7 @@ IRInfo irinfo[] = {
 		   {IR_ADD_IMM, "ADD", IR_TY_REG_IMM},
 		   {IR_MOV, "MOV", IR_TY_REG_REG},
 		   {IR_LABEL, "", IR_TY_LABEL},
+		   {IR_JMP, "JMP", IR_TY_LABEL},
 		   {IR_UNLESS, "UNLESS", IR_TY_REG_LABEL},
 		   {IR_RETURN, "RET", IR_TY_REG},
 		   {IR_ALLOCA, "ALLOCA", IR_TY_REG_IMM},
@@ -40,7 +41,7 @@ static char *tostr(IR *ir) {
   IRInfo *info = get_irinfo(ir);
   switch (info->ty) {
   case IR_TY_LABEL:
-    return format("%s:\n", ir->lhs);
+    return format(".L%d:\n", ir->lhs);
   case IR_TY_REG:
     return format("%s r%d\n", info->name, ir->lhs);
   case IR_TY_REG_REG:
@@ -48,7 +49,7 @@ static char *tostr(IR *ir) {
   case IR_TY_REG_IMM:
     return format("%s r%d, %d\n", info->name, ir->lhs, ir->rhs);
   case IR_TY_REG_LABEL:
-    return format("%s r%d, .L%s\n", info->name, ir->lhs, ir->rhs);
+    return format("%s r%d, .L%d\n", info->name, ir->lhs, ir->rhs);
   default:
     assert(info->ty == IR_TY_NOARG);
     return format("%s\n", info->name);
@@ -135,7 +136,17 @@ static void gen_stmt(Node *node) {
     add(IR_UNLESS, r, x);
     add(IR_KILL, r, -1);
     gen_stmt(node->then);
+
+    if (!node->els) {
+      add(IR_LABEL, x, -1);
+      return;
+    }
+
+    int y = label++;
+    add(IR_JMP, y, -1);
     add(IR_LABEL, x, -1);
+    gen_stmt(node->els);
+    add(IR_LABEL, y, -1);
     return;
   }
   
