@@ -75,6 +75,7 @@ enum {
       ND_IDENT,         // Identifier
       ND_IF,            // "if"
       ND_RETURN,        // "return"
+      ND_CALL,          // Function call
       ND_COMP_STMT,     // Compound statement
       ND_EXPR_STMT,     // Expressions statement
 };
@@ -92,6 +93,8 @@ typedef struct Node {
   struct Node *cond;
   struct Node *then;
   struct Node *els;
+  // Function call
+  Vector *args;
 } Node;
 
 Node *parse(Vector *tokens);
@@ -103,6 +106,7 @@ enum {
       IR_ADD_IMM,
       IR_MOV,
       IR_RETURN,
+      IR_CALL,
       IR_LABEL,
       IR_JMP,
       IR_UNLESS,
@@ -120,6 +124,11 @@ typedef struct {
 
   bool has_imm;
   int imm;
+
+  // Function call
+  char *name;
+  int nargs;
+  int args[6];
 } IR;
 
 enum {
@@ -129,6 +138,7 @@ enum {
       IR_TY_REG_REG,
       IR_TY_REG_IMM,
       IR_TY_REG_LABEL,
+      IR_TY_CALL,
 };
 
 typedef struct {

@@ -4,7 +4,7 @@ try() {
   input="$2"
 
   ./9cc "$input" > tmp.s
-  gcc -static -o tmp tmp.s
+  gcc -static -o tmp tmp.s tmp-plus.o
   ./tmp
   actual="$?"
 
@@ -15,6 +15,8 @@ try() {
     exit 1
   fi
 }
+
+echo 'int plus(int x, int y) { return x + y; }' | gcc -xc -c -o tmp-plus.o -
 
 try 0 'return 0;'
 try 42 'return 42;'
@@ -35,5 +37,5 @@ try 3 'if (0) return 2; return 3;'
 try 2 'if (1) return 2; else return 3;'
 try 3 'if (0) return 2; else return 3;'
 
-
+try 5 'return plus(2, 3);'
 echo OK
