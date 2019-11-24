@@ -7,12 +7,13 @@ void gen(Function *fn) {
 
   printf(".global %s\n", fn->name);
   printf("%s:\n", fn->name);
+  printf("  push rbp\n");
+  printf("  mov rbp, rsp\n");
+  printf("  sub rsp, %d\n", fn->stacksize);
   printf("  push r12\n");
   printf("  push r13\n");
   printf("  push r14\n");
   printf("  push r15\n");
-  printf("  push rbp\n");
-  printf("  mov rbp, rsp\n");
   
   for (int i = 0; i < fn->ir->len; i++) {
     IR *ir = fn->ir->data[i];
@@ -20,6 +21,9 @@ void gen(Function *fn) {
     switch (ir->op) {
     case IR_IMM:
       printf("  mov %s, %d\n", regs[ir->lhs], ir->rhs);
+      break;
+    case IR_ADD_IMM:
+      printf("  add %s, %d\n", regs[ir->lhs], ir->rhs);
       break;
     case IR_MOV:
       printf("  mov %s, %s\n", regs[ir->lhs], regs[ir->rhs]);
@@ -29,7 +33,6 @@ void gen(Function *fn) {
       printf("  jmp %s\n", ret);
       break;
     case IR_CALL: {
-
       char *arg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
       for (int i = 0; i < ir->nargs; i++)
 	printf("  mov %s, %s\n", arg[i], regs[ir->args[i]]);
@@ -52,11 +55,6 @@ void gen(Function *fn) {
     case IR_UNLESS:
       printf("  cmp %s, 0\n", regs[ir->lhs]);
       printf("  je .L%d\n", ir->rhs);
-      break;
-    case IR_ALLOCA:
-      if (ir->rhs)
-	printf("  sub rsp, %d\n", ir->rhs);
-      printf("  mov %s, rsp\n", regs[ir->lhs]);
       break;
     case IR_LOAD:
       printf("  mov %s, [%s]\n", regs[ir->lhs], regs[ir->rhs]);
@@ -91,13 +89,12 @@ void gen(Function *fn) {
     }
   }
   printf("%s:\n", ret);
-  printf("  mov rsp, rbp\n");
-  printf("  mov rsp, rbp\n");
-  printf("  pop rbp\n");
   printf("  pop r15\n");
   printf("  pop r14\n");
   printf("  pop r13\n");
   printf("  pop r12\n");
+  printf("  mov rsp, rbp\n");
+  printf("  pop rbp\n");
   printf("  ret\n");
 }
 

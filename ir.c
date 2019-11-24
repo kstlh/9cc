@@ -1,10 +1,13 @@
 #include "9cc.h"
 
+// Compile AST to intermediate code that has infinite number of registers.
+// Base pointer is always assigned to r0.
+
 IRInfo irinfo[] = {
-		   {'+', "+", IR_TY_REG_REG},
-		   {'-', "-", IR_TY_REG_REG},
-		   {'*', "*", IR_TY_REG_REG},
-		   {'/', "/", IR_TY_REG_REG},
+		   {'+', "ADD", IR_TY_REG_REG},
+		   {'-', "SUB", IR_TY_REG_REG},
+		   {'*', "MUL", IR_TY_REG_REG},
+		   {'/', "DIV", IR_TY_REG_REG},
 		   {IR_IMM, "MOV", IR_TY_REG_IMM},
 		   {IR_ADD_IMM, "ADD", IR_TY_REG_IMM},
 		   {IR_MOV, "MOV", IR_TY_REG_REG},
@@ -13,7 +16,6 @@ IRInfo irinfo[] = {
 		   {IR_UNLESS, "UNLESS", IR_TY_REG_LABEL},
 		   {IR_RETURN, "RET", IR_TY_REG},
 		   {IR_CALL, "CALL", IR_TY_CALL},
-		   {IR_ALLOCA, "ALLOCA", IR_TY_REG_IMM},
 		   {IR_LOAD, "LOAD", IR_TY_REG_REG},
 		   {IR_STORE, "STORE", IR_TY_REG_REG},
 		   {IR_KILL, "KILL", IR_TY_REG},
@@ -22,13 +24,10 @@ IRInfo irinfo[] = {
 };
 
 static Vector *code;
-static int regno;
-static int basereg;
 
 static Map *vars;
-static int bpoff;
-
-
+static int regno;
+static int stacksize;
 static int label;
 
 IRInfo *get_irinfo(IR *ir) {
@@ -84,30 +83,20 @@ static IR *add(int op, int lhs, int rhs) {
 }
 
 
-static IR *add_imm(int op, int lhs, int imm) {
-  IR *ir = calloc(1, sizeof(IR));
-  ir->op = op;
-  ir->lhs = lhs;
-  ir->has_imm = true;
-  ir->imm = imm;
-  vec_push(code, ir);
-  return ir;
-}
-
 static int gen_lval(Node *node) {
   
     if (node->ty != ND_IDENT)
       error("not an lvalue");
 
     if (!map_exists(vars, node->name)) {
-      map_put(vars, node->name, (void *)(intptr_t)bpoff);
-      bpoff += 8;
+      stacksize += 8;
+      map_put(vars, node->name, (void *)(intptr_t)stacksize);
     }
 
     int r = regno++;
     int off = (intptr_t)map_get(vars, node->name);
-    add(IR_MOV, r, basereg);
-    add_imm('+', r, off);
+    add(IR_MOV, r, 0);
+    add(IR_ADD_IMM, r, -off);
     return r;
 }
 
@@ -210,19 +199,17 @@ Vector *gen_ir(Vector *nodes) {
     assert(node->ty == ND_FUNC);
 
     code = new_vec();
-    regno = 1;
-    basereg = 0;
-    vars = new_map();
-    bpoff = 0;
-    label = 0;
 
-    IR *alloca = add(IR_ALLOCA, basereg, -1);
+
+    vars = new_map();
+    regno = 1;
+    stacksize = 8;
+
     gen_stmt(node->body);
-    alloca->rhs = bpoff;
-    add(IR_KILL, basereg, -1);
 
     Function *fn = malloc(sizeof(Function));
     fn->name = node->name;
+    fn->stacksize = stacksize;
     fn->ir = code;
     vec_push(v, fn);
   }
