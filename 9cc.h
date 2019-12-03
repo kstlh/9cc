@@ -121,6 +121,7 @@ enum {
       IR_RETURN,
       IR_CALL,
       IR_LABEL,
+      IR_LT,
       IR_JMP,
       IR_UNLESS,
       IR_LOAD,
@@ -176,6 +177,7 @@ void dump_ir(Vector *irv);
 /// regalloc.c
 
 extern char *regs[];
+extern char *regs8[];
 void alloc_regs(Vector *irv);
 
 /// gen_x86.c
