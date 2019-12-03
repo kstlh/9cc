@@ -3,8 +3,7 @@
 void expect(int line, int expected, int actual) {
   if (expected == actual)
     return;
-  fprintf(stderr, "%d: %d expected, but got %d\n",
-	  line, expected, actual);
+  fprintf(stderr, "%d: %d expected, but got %d\n", line, expected, actual);
   exit(1);
 }
 
@@ -37,7 +36,6 @@ static void map_test() {
   expect(__LINE__, true, map_exists(map, "foo"));
   expect(__LINE__, false, map_exists(map, "baz"));
 }
-
 
 static void sb_test() {
   StringBuilder *sb1 = new_sb();

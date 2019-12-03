@@ -4,24 +4,15 @@
 // Base pointer is always assigned to r0.
 
 IRInfo irinfo[] = {
-		   {IR_ADD, "ADD", IR_TY_REG_REG},
-		   {IR_SUB, "SUB", IR_TY_REG_REG},
-		   {IR_MUL, "MUL", IR_TY_REG_REG},
-		   {IR_DIV, "DIV", IR_TY_REG_REG},
-		   {IR_IMM, "MOV", IR_TY_REG_IMM},
-		   {IR_SUB_IMM, "SUB", IR_TY_REG_IMM},
-		   {IR_MOV, "MOV", IR_TY_REG_REG},
-		   {IR_LABEL, "", IR_TY_LABEL},
-		   {IR_JMP, "JMP", IR_TY_LABEL},
-		   {IR_UNLESS, "UNLESS", IR_TY_REG_LABEL},
-		   {IR_RETURN, "RET", IR_TY_REG},
-		   {IR_CALL, "CALL", IR_TY_CALL},
-		   {IR_LOAD, "LOAD", IR_TY_REG_REG},
-		   {IR_STORE, "STORE", IR_TY_REG_REG},
-		   {IR_KILL, "KILL", IR_TY_REG},
-		   {IR_SAVE_ARGS, "SAVE_ARGS", IR_TY_IMM},
-		   {IR_NOP, "NOP", IR_TY_NOARG},
-		   {0, NULL, 0},
+    {IR_ADD, "ADD", IR_TY_REG_REG},   {IR_SUB, "SUB", IR_TY_REG_REG},
+    {IR_MUL, "MUL", IR_TY_REG_REG},   {IR_DIV, "DIV", IR_TY_REG_REG},
+    {IR_IMM, "MOV", IR_TY_REG_IMM},   {IR_SUB_IMM, "SUB", IR_TY_REG_IMM},
+    {IR_MOV, "MOV", IR_TY_REG_REG},   {IR_LABEL, "", IR_TY_LABEL},
+    {IR_JMP, "JMP", IR_TY_LABEL},     {IR_UNLESS, "UNLESS", IR_TY_REG_LABEL},
+    {IR_RETURN, "RET", IR_TY_REG},    {IR_CALL, "CALL", IR_TY_CALL},
+    {IR_LOAD, "LOAD", IR_TY_REG_REG}, {IR_STORE, "STORE", IR_TY_REG_REG},
+    {IR_KILL, "KILL", IR_TY_REG},     {IR_SAVE_ARGS, "SAVE_ARGS", IR_TY_IMM},
+    {IR_NOP, "NOP", IR_TY_NOARG},     {0, NULL, 0},
 };
 
 static Vector *code;
@@ -85,22 +76,21 @@ static IR *add(int op, int lhs, int rhs) {
   return ir;
 }
 
-
 static int gen_lval(Node *node) {
-  
-    if (node->ty != ND_IDENT)
-      error("not an lvalue");
 
-    if (!map_exists(vars, node->name)) {
-      stacksize += 8;
-      map_put(vars, node->name, (void *)(intptr_t)stacksize);
-    }
+  if (node->ty != ND_IDENT)
+    error("not an lvalue");
 
-    int r = regno++;
-    int off = (intptr_t)map_get(vars, node->name);
-    add(IR_MOV, r, 0);
-    add(IR_SUB_IMM, r, off);
-    return r;
+  if (!map_exists(vars, node->name)) {
+    stacksize += 8;
+    map_put(vars, node->name, (void *)(intptr_t)stacksize);
+  }
+
+  int r = regno++;
+  int off = (intptr_t)map_get(vars, node->name);
+  add(IR_MOV, r, 0);
+  add(IR_SUB_IMM, r, off);
+  return r;
 }
 
 static int gen_expr(Node *node) {
@@ -115,7 +105,7 @@ static int gen_expr(Node *node) {
     add(IR_LOAD, r, r);
     return r;
   }
-  
+
   if (node->ty == ND_CALL) {
     int args[6];
     for (int i = 0; i < node->args->len; i++)
@@ -140,9 +130,8 @@ static int gen_expr(Node *node) {
     add(IR_KILL, rhs, -1);
     return lhs;
   }
-  
-  assert(strchr("+-*/",node->ty));
 
+  assert(strchr("+-*/", node->ty));
 
   int ty;
   if (node->ty == '+')
@@ -153,7 +142,7 @@ static int gen_expr(Node *node) {
     ty = IR_MUL;
   else
     ty = IR_DIV;
-  
+
   int lhs = gen_expr(node->lhs);
   int rhs = gen_expr(node->rhs);
 
@@ -182,7 +171,7 @@ static void gen_stmt(Node *node) {
     add(IR_LABEL, y, -1);
     return;
   }
-  
+
   if (node->ty == ND_RETURN) {
     int r = gen_expr(node->expr);
     add(IR_RETURN, r, -1);
@@ -229,7 +218,6 @@ Vector *gen_ir(Vector *nodes) {
     assert(node->ty == ND_FUNC);
 
     code = new_vec();
-
 
     vars = new_map();
     regno = 1;

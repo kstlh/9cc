@@ -27,11 +27,11 @@ static void kill(int r) {
   used[r] = false;
 }
 
-static void visit(Vector *irv){
+static void visit(Vector *irv) {
   // r0 is a reserved register that is always mapped to rbp.
   reg_map[0] = 0;
   used[0] = true;
-  
+
   for (int i = 0; i < irv->len; i++) {
     IR *ir = irv->data[i];
     IRInfo *info = get_irinfo(ir);
@@ -49,11 +49,11 @@ static void visit(Vector *irv){
     case IR_TY_CALL:
       ir->lhs = alloc(ir->lhs);
       for (int i = 0; i < ir->nargs; i++)
-	ir->args[i] = alloc(ir->args[i]);
+        ir->args[i] = alloc(ir->args[i]);
       break;
     }
 
-    if(ir->op == IR_KILL){
+    if (ir->op == IR_KILL) {
       kill(ir->lhs);
       ir->op = IR_NOP;
     }

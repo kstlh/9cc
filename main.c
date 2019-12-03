@@ -2,7 +2,7 @@
 
 int main(int argc, char **argv) {
 
-  if (!strcmp(argv[1],"-test")) {
+  if (!strcmp(argv[1], "-test")) {
     util_test();
     return 0;
   }
@@ -27,14 +27,14 @@ int main(int argc, char **argv) {
   Vector *tokens = tokenize(input);
   Vector *fns = gen_ir(parse(tokens));
 
-  if(dump_ir1)
+  if (dump_ir1)
     dump_ir(fns);
-      
+
   alloc_regs(fns);
 
-  if(dump_ir2)
+  if (dump_ir2)
     dump_ir(fns);
-  
+
   gen_x86(fns);
   return 0;
 }

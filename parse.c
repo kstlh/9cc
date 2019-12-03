@@ -38,7 +38,7 @@ static Node *term() {
   }
 
   Node *node = calloc(1, sizeof(Node));
-  
+
   if (t->ty == TK_NUM) {
     node->ty = ND_NUM;
     node->val = t->val;
@@ -73,7 +73,7 @@ static Node *mul() {
   for (;;) {
     Token *t = tokens->data[pos];
     int op = t->ty;
-    if(op != '*' && op != '/')
+    if (op != '*' && op != '/')
       return lhs;
     pos++;
     lhs = new_node(op, lhs, term());
@@ -99,7 +99,6 @@ static Node *assign() {
     return new_node('=', lhs, expr());
   return lhs;
 }
-
 
 static Node *stmt() {
   Node *node = calloc(1, sizeof(Node));
@@ -135,11 +134,10 @@ static Node *compound_stmt() {
   node->ty = ND_COMP_STMT;
   node->stmts = new_vec();
 
-  while(!consume('}'))
+  while (!consume('}'))
     vec_push(node->stmts, stmt());
   return node;
 }
-
 
 static Node *function() {
   Node *node = calloc(1, sizeof(Node));
@@ -167,7 +165,6 @@ static Node *function() {
 Vector *parse(Vector *tokens_) {
   tokens = tokens_;
   pos = 0;
-
 
   Vector *v = new_vec();
   while (((Token *)tokens->data[pos])->ty != TK_EOF)
